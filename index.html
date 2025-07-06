@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IB Interview Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.8;
+        }
+
+        .setup-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .setup-section h2 {
+            margin-bottom: 20px;
+            color: #4ecdc4;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .form-group select:focus, .form-group input:focus {
+            outline: none;
+            border-color: #4ecdc4;
+            box-shadow: 0 0 10px rgba(78, 205, 196, 0.3);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .interview-section {
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .question-display {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .question-display h3 {
+            font-size: 1.8em;
+            line-height: 1.4;
+            color: #4ecdc4;
+        }
+
+        .timer-display {
+            font-size: 3em;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            color: #ff6b6b;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+        }
+
+        .timer-display.warning {
+            color: #ff9f43;
+            animation: pulse 1s infinite;
+        }
+
+        .timer-display.critical {
+            color: #ff3838;
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .recording-status {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .recording-status.recording {
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid #ff6b6b;
+        }
+
+        .recording-status.stopped {
+            background: rgba(78, 205, 196, 0.2);
+            border: 1px solid #4ecdc4;
+        }
+
+        .transcript {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .transcript h4 {
+            margin-bottom: 10px;
+            color: #4ecdc4;
+        }
+
+        .session-summary {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+        }
+
+        .session-summary h3 {
+            color: #4ecdc4;
+            margin-bottom: 20px;
+        }
+
+        .question-review {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .question-review h5 {
+            color: #ff6b6b;
+            margin-bottom: 10px;
+        }
+
+        .question-review p {
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+
+        .phase-indicator {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .phase-indicator h4 {
+            color: #4ecdc4;
+            margin-bottom: 5px;
+        }
+
+        .phase-indicator p {
+            opacity: 0.8;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .timer-display {
+                font-size: 2em;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏦 IB Interview Simulator</h1>
+            <p>Practice with real-time audio recording and comprehensive question bank</p>
+        </div>
+
+        <div class="setup-section" id="setupSection">
+            <h2>📋 Interview Setup</h2>
+            <div class="form-group">
+                <label for="interviewType">Interview Type:</label>
+                <select id="interviewType">
+                    <option value="full">Full Interview (90 min)</option>
+                    <option value="behavioral">Behavioral Only (20 min)</option>
+                    <option value="technical">Technical Only (30 min)</option>
+                    <option value="market">Market Awareness (15 min)</option>
+                    <option value="custom">Custom Session</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="questionTime">Time per Question (seconds):</label>
+                <input type="number" id="questionTime" value="120" min="30" max="300">
+            </div>
+            <div class="form-group">
+                <label for="candidateName">Your Name:</label>
+                <input type="text" id="candidateName" placeholder="Enter your name">
+            </div>
+            <button class="btn" onclick="startInterview()">🚀 Start Interview</button>
+        </div>
+
+        <div class="interview-section" id="interviewSection">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            
+            <div class="phase-indicator" id="phaseIndicator">
+                <h4 id="phaseTitle">Introduction & Rapport Building</h4>
+                <p id="phaseDescription">Building rapport and getting comfortable</p>
+            </div>
+
+            <div class="question-display" id="questionDisplay">
+                <h3 id="currentQuestion">Click "Next Question" to begin</h3>
+            </div>
+
+            <div class="timer-display" id="timerDisplay">2:00</div>
+
+            <div class="recording-status" id="recordingStatus">
+                <p>🎤 Click "Start Recording" when ready to answer</p>
+            </div>
+
+            <div class="controls">
+                <button class="btn" id="recordBtn" onclick="toggleRecording()">🎤 Start Recording</button>
+                <button class="btn" id="nextBtn" onclick="nextQuestion()">➡️ Next Question</button>
+                <button class="btn" id="pauseBtn" onclick="pauseTimer()">⏸️ Pause</button>
+                <button class="btn" onclick="endInterview()">🏁 End Interview</button>
+            </div>
+
+            <div class="transcript" id="transcript" style="display: none;">
+                <h4>Your Answer:</h4>
+                <p id="transcriptText">Your response will appear here...</p>
+            </div>
+        </div>
+
+        <div class="session-summary" id="sessionSummary" style="display: none;">
+            <h3>📊 Interview Summary</h3>
+            <div id="summaryContent"></div>
+            <button class="btn" onclick="startNewSession()">🔄 Start New Session</button>
+        </div>
+    </div>
+
+    <script>
+        // Comprehensive question bank
+        const questionBank = {
+            behavioral: [
+                "Walk me through your resume.",
+                "Why investment banking?",
+                "Tell me about yourself.",
+                "Why not consulting or tech?",
+                "What's the toughest thing you've had to do recently?",
+                "Describe a time you had to learn something quickly.",
+                "Tell me about a time you led a team or motivated someone.",
+                "How do you handle conflict with a peer or superior?",
+                "Tell me about a time you failed and what you learned.",
+                "Describe a situation where you had to work with someone difficult.",
+                "What's your biggest weakness?",
+                "Where do you see yourself in 5 years?",
+                "Tell me about a time you had to make a decision with incomplete information.",
+                "Describe a time you had to convince someone to see your point of view.",
+                "What motivates you to perform at your best?"
+            ],
+            technical: [
+                "Walk me through the 3 financial statements.",
+                "How does $10 of depreciation flow through the statements?",
+                "Walk me through a DCF.",
+                "What's the difference between EV and Equity Value?",
+                "How do you calculate WACC?",
+                "What are the pros and cons of using EBITDA?",
+                "What makes a deal accretive vs. dilutive?",
+                "How do synergies affect a deal?",
+                "Walk me through a simple LBO model.",
+                "Why might a company prefer debt over equity?",
+                "How do you value a company with no earnings?",
+                "What's the difference between IRR and NPV?",
+                "How would you model working capital?",
+                "What are the key drivers in a DCF model?",
+                "How do you calculate terminal value?",
+                "What's the difference between ROIC and ROE?",
+                "How do you adjust for risk in valuation?",
+                "What is the capital asset pricing model?",
+                "How do you value a private company?",
+                "What are comparables and when do you use them?",
+                "How do you calculate free cash flow?",
+                "What's the difference between book value and market value?",
+                "How do interest rates affect valuation?",
+                "What is economic value added (EVA)?",
+                "How do you model a merger?",
+                "What are the key metrics in LBO analysis?",
+                "How do you calculate cost of debt?",
+                "What is the difference between nominal and real rates?",
+                "How do you handle negative working capital?",
+                "What are the limitations of DCF analysis?",
+                "How do you value options and warrants?",
+                "What is the difference between diluted and basic EPS?",
+                "How do you model seasonality in cash flows?",
+                "What is the difference between gross and net debt?",
+                "How do you calculate enterprise value?",
+                "What are the key assumptions in terminal value?",
+                "How do you model capex in a DCF?",
+                "What is the difference between levered and unlevered returns?",
+                "How do you calculate tax shields?",
+                "What are the components of working capital?",
+                "How do you model debt capacity?",
+                "What is the difference between trading and transaction multiples?",
+                "How do you adjust multiples for different capital structures?",
+                "What are the key metrics for retail companies?",
+                "How do you value a REIT?",
+                "What are the key differences between equity and debt financing?",
+                "How do you model a spin-off?",
+                "What is the difference between strategic and financial buyers?",
+                "How do you calculate the cost of preferred stock?",
+                "What are the key considerations in cross-border M&A?",
+                "How do you model currency hedging?",
+                "What is the difference between acquisition and merger accounting?",
+                "How do you value intangible assets?",
+                "What are the key risks in LBO transactions?",
+                "How do you model management equity in LBOs?",
+                "What is the difference between cash and stock deals?",
+                "How do you calculate accretion/dilution?",
+                "What are the key factors in choosing financing structure?",
+                "How do you model refinancing scenarios?",
+                "What is the difference between public and private valuations?",
+                "How do you handle off-balance-sheet items?",
+                "What are the key considerations in distressed M&A?",
+                "How do you model restructuring scenarios?",
+                "What is the difference between asset and stock purchases?",
+                "How do you calculate breakup value?",
+                "What are the key metrics for technology companies?",
+                "How do you value a company with multiple business segments?",
+                "What is the difference between momentum and value investing?",
+                "How do you model IPO pricing?",
+                "What are the key considerations in take-private transactions?",
+                "How do you calculate dividend capacity?",
+                "What is the difference between senior and subordinated debt?",
+                "How do you model covenant compliance?",
+                "What are the key factors in credit analysis?",
+                "How do you calculate recovery rates?",
+                "What is the difference between secured and unsecured debt?",
+                "How do you model default scenarios?",
+                "What are the key considerations in debt restructuring?",
+                "How do you calculate debt service coverage ratios?",
+                "What is the difference between cash flow and earnings?",
+                "How do you model working capital cycles?",
+                "What are the key factors in industry analysis?",
+                "How do you calculate market share and competitive positioning?",
+                "What is the difference between organic and inorganic growth?",
+                "How do you model regulatory changes?",
+                "What are the key considerations in ESG investing?",
+                "How do you calculate carbon footprint and sustainability metrics?",
+                "What is the difference between active and passive investing?",
+                "How do you model alternative investments?",
+                "What are the key factors in portfolio construction?",
+                "How do you calculate risk-adjusted returns?",
+                "What is the difference between systematic and unsystematic risk?",
+                "How do you model inflation and interest rate sensitivity?",
+                "What are the key considerations in emerging market investing?",
+                "How do you calculate currency exposure and hedging?",
+                "What is the difference between fundamental and technical analysis?",
+                "How do you model behavioral factors in markets?",
+                "What are the key metrics for measuring investment performance?",
+                "How do you calculate Sharpe ratios and other risk metrics?",
+                "What is the difference between alpha and beta?",
+                "How do you model factor investing strategies?",
+                "What are the key considerations in quantitative analysis?",
+                "How do you calculate volatility and correlation?",
+                "What is the difference between realized and implied volatility?",
+                "How do you model options pricing?",
+                "What are the key factors in derivatives valuation?",
+                "How do you calculate Greeks in options trading?",
+                "What is the difference between futures and forwards?",
+                "How do you model commodity pricing?",
+                "What are the key considerations in structured products?",
+                "How do you calculate credit spreads and default probabilities?"
+            ],
+            market: [
+                "What's happening in the markets right now?",
+                "How are interest rates affecting deal activity?",
+                "Tell me about a recent M&A deal you found interesting.",
+                "If you had $1B, where would you invest?",
+                "What industries interest you and why?",
+                "How do you think the current economic environment affects M&A?",
+                "What's your view on the current IPO market?",
+                "How do geopolitical tensions affect global markets?",
+                "What's driving the current market volatility?",
+                "How do you see inflation affecting corporate strategy?",
+                "What sectors are you most bullish on right now?",
+                "How is ESG affecting investment decisions?",
+                "What's your take on the current credit environment?",
+                "How are supply chain issues affecting valuations?",
+                "What's driving the current trends in private equity?"
+            ],
+            cultural: [
+                "Why this firm specifically?",
+                "What other firms are you interviewing with?",
+                "Why should we hire you?",
+                "How would your teammates describe you?",
+                "What do you value in a team environment?",
+                "How do you handle working long hours?",
+                "What's your ideal work environment?",
+                "How do you stay motivated during challenging times?",
+                "What's your approach to building relationships?",
+                "How do you handle feedback and criticism?",
+                "What's your leadership style?",
+                "How do you prioritize competing demands?",
+                "What's your approach to continuous learning?",
+                "How do you handle stress and pressure?",
+                "What's your vision for your career?"
+            ],
+            rapid: [
+                "What's your biggest weakness?",
+                "Tell me about a time you made a mistake.",
+                "What would you do if you didn't get this job?",
+                "Pitch me a stock or investment idea.",
+                "What do you do outside of work?",
+                "If you could have dinner with anyone, who would it be?",
+                "What's the last book you read?",
+                "How do you stay updated on financial news?",
+                "What's your favorite financial publication?",
+                "If you could change one thing about Wall Street, what would it be?"
+            ]
+        };
+
+        // Interview phases with timing
+        const interviewPhases = {
+            full: [
+                { name: "Introduction & Rapport", duration: 5, questions: ["Thanks for taking the time. How's everything going?"] },
+                { name: "Behavioral Deep Dive", duration: 15, questions: questionBank.behavioral },
+                { name: "Technical Questions", duration: 25, questions: questionBank.technical },
+                { name: "Market Awareness", duration: 15, questions: questionBank.market },
+                { name: "Cultural Fit", duration: 15, questions: questionBank.cultural },
+                { name: "Rapid Fire", duration: 10, questions: questionBank.rapid },
+                { name: "Your Questions", duration: 5, questions: ["What questions do you have for me?"] }
+            ],
+            behavioral: [
+                { name: "Behavioral Questions", duration: 20, questions: questionBank.behavioral }
+            ],
+            technical: [
+                { name: "Technical Assessment", duration: 30, questions: questionBank.technical }
+            ],
+            market: [
+                { name: "Market Awareness", duration: 15, questions: questionBank.market }
+            ]
+        };
+
+        // Global variables
+        let currentSession = null;
+        let currentPhase = 0;
+        let currentQuestionIndex = 0;
+        let timer = null;
+        let timeRemaining = 0;
+        let isRecording = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let recognition = null;
+        let sessionData = [];
+
+        // Initialize speech recognition
+        function initializeSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window) {
+                recognition = new webkitSpeechRecognition();
+            } else if ('SpeechRecognition' in window) {
+                recognition = new SpeechRecognition();
+            }
+
+            if (recognition) {
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.lang = 'en-US';
+
+                recognition.onresult = function(event) {
+                    let finalTranscript = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        if (event.results[i].isFinal) {
+                            finalTranscript += event.results[i][0].transcript;
+                        }
+                    }
+                    if (finalTranscript) {
+                        document.getElementById('transcriptText').textContent = finalTranscript;
+                    }
+                };
+
+                recognition.onerror = function(event) {
+                    console.error('Speech recognition error:', event.error);
+                };
+            }
+        }
+
+        // Start interview
+        function startInterview() {
+            const interviewType = document.getElementById('interviewType').value;
+            const timePerQuestion = parseInt(document.getElementById('questionTime').value);
+            const candidateName = document.getElementById('candidateName').value;
+
+            if (!candidateName.trim()) {
+                alert('Please enter your name');
+                return;
+            }
+
+            currentSession = {
+                type: interviewType,
+                timePerQuestion: timePerQuestion,
+                candidateName: candidateName,
+                phases: interviewPhases[interviewType] || interviewPhases.full,
+                startTime: new Date()
+            };
+
+            // Shuffle questions for randomization
+            currentSession.phases.forEach(phase => {
+                phase.questions = shuffleArray([...phase.questions]);
+            });
+
+            sessionData = [];
+            currentPhase = 0;
+            currentQuestionIndex = 0;
+
+            document.getElementById('setupSection').style.display = 'none';
+            document.getElementById('interviewSection').style.display = 'block';
+
+            initializeSpeechRecognition();
+            updatePhaseDisplay();
+            updateProgressBar();
+        }
+
+        // Shuffle array utility
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Update phase display
+        function updatePhaseDisplay() {
+            const phase = currentSession.phases[currentPhase];
+            document.getElementById('phaseTitle').textContent = phase.name;
+            document.getElementById('phaseDescription').textContent = `Phase ${currentPhase + 1} of ${currentSession.phases.length}`;
+        }
+
+        // Update progress bar
+        function updateProgressBar() {
+            const totalPhases = currentSession.phases.length;
+            const progress = ((currentPhase + 1) / totalPhases) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        // Next question
+        function nextQuestion() {
+            if (currentSession.phases.length === 0) return;
+
+            const phase = currentSession.phases[currentPhase];
+            
+            if (currentQuestionIndex >= phase.questions.length) {
+                // Move to next phase
+                currentPhase++;
+                currentQuestionIndex = 0;
+                
+                if (currentPhase >= currentSession.phases.length) {
+                    endInterview();
+                    return;
+                }
+                
+                updatePhaseDisplay();
+                updateProgressBar();
+                phase = currentSession.phases[currentPhase];
+            }
+
+            const question = phase.questions[currentQuestionIndex];
+            document.getElementById('currentQuestion').textContent = question;
+            
+            timeRemaining = currentSession.timePerQuestion;
+            updateTimerDisplay();
+            
+            currentQuestionIndex++;
+            
+            // Reset recording state
+            stopRecording();
+            document.getElementById('transcript').style.display = 'none';
+            document.getElementById('transcriptText').textContent = 'Your response will appear here...';
+        }
+
+        // Timer functions
+        function startTimer() {
+            timer = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                
+                if (timeRemaining <= 0) {
+                    clearInterval(timer);
+                    stopRecording();
+                    nextQuestion();
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+                document.getElementById('pauseBtn').textContent = '▶️ Resume';
+                document.getElementById('pauseBtn').onclick = resumeTimer;
+            }
+        }
+
+        function resumeTimer() {
+            startTimer();
+            document.getElementById('pauseBtn').textContent = '⏸️ Pause';
+            document.getElementById('pauseBtn').onclick = pauseTimer;
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            const timerDisplay = document.getElementById('timerDisplay');
+            timerDisplay.textContent = timeStr;
+            
+            // Change color based on time remaining
+            timerDisplay.className = '';
+            if (timeRemaining <= 30) {
+                timerDisplay.className = 'critical';
+            } else if (timeRemaining <= 60) {
+                timerDisplay.className = 'warning';
+            }
+        }
+
+        // Recording functions
+        function toggleRecording() {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+
+        function startRecording() {
+            if (recognition) {
+                recognition.start();
+                isRecording = true;
+                
+                document.getElementById('recordBtn').textContent = '⏹️ Stop Recording';
+                document.getElementById('recordingStatus').innerHTML = '<p>🔴 Recording in progress...</p>';
+                document.getElementById('recordingStatus').className = 'recording-status recording';
+                document.getElementById('transcript').style.display = 'block';
+                
+                // Start timer when recording starts
+                if (!timer) {
+                    startTimer();
+                }
+            } else {
+                alert('Speech recognition not supported in this browser');
+            }
+        }
+
+        function stopRecording() {
+            if (recognition && isRecording) {
+                recognition.stop();
+                isRecording = false;
+                
+                document.getElementById('recordBtn').textContent = '🎤 Start Recording';
+                document.getElementById('recordingStatus').innerHTML = '<p>⏹️ Recording stopped</p>';
+                document.getElementById('recordingStatus').className = 'recording-status stopped';
+                
+                // Save the question and answer
+                const question = document.getElementById('currentQuestion').textContent;
+                const answer = document.getElementById('transcriptText').textContent;
+                
+                sessionData.push({
+                    phase: currentSession.phases[currentPhase].name,
+                    question: question,
+                    answer: answer,
+                    timeUsed: currentSession.timePerQuestion - timeRemaining
+                });
+            }
+        }
+
+        // End interview
+        function endInterview() {
+            if (timer) {
+                clearInterval(timer);
+            }
+            
+            stopRecording();
+            
+            document.getElementById('interviewSection').style.display = 'none';
+            document.getElementById('sessionSummary').style.display = 'block';
+            
+            generateSummary();
+        }
+
+        // Generate summary
+        function generateSummary() {
+            const summaryContent = document.getElementById('summaryContent');
+            const totalQuestions = sessionData.length;
+            const avgTimeUsed = sessionData.reduce((sum, item) => sum + item.timeUsed, 0) / totalQuestions;
+            
+            let summaryHTML = `
+                <div class="question-review">
+                    <h5>📊 Session Statistics</h5>
+                    <p><strong>Candidate:</strong> ${currentSession.candidateName}</p>
+                    <p><strong>Interview Type:</strong> ${currentSession.type}</p>
+                    <p><strong>Total Questions:</strong> ${totalQuestions}</p>
+                    <p><strong>Average Time Used:</strong> ${Math.round(avgTimeUsed)} seconds</p>
+                    <p><strong>Session Duration:</strong> ${Math.round((new Date() - currentSession.startTime) / 1000 / 60)} minutes</p>
+                </div>
+            `;
+            
+            sessionData.forEach((item, index) => {
+                summaryHTML += `
+                    <div class="question-review">
+                        <h5>Q${index + 1}: ${item.question}</h5>
+                        <p><strong>Phase:</strong> ${item.phase}</p>
+                        <p><strong>Time Used:</strong> ${item.timeUsed} seconds</p>
+                        <p><strong>Your Answer:</strong> ${item.answer || 'No response recorded'}</p>
+                    </div>
+                `;
+            });
+            
+            summaryContent.innerHTML = summaryHTML;
+        }
+
+        // Start new session
+        function startNewSession() {
+            document.getElementById('sessionSummary').style.display = 'none';
+            document.getElementById('setupSection').style.display = 'block';
+            
+            // Reset form values
+            document.getElementById('candidateName').value = '';
+            document.getElementById('interviewType').value = 'full';
+            document.getElementById('questionTime').value = '120';
+            
+            // Reset global variables
+            currentSession = null;
+            currentPhase = 0;
+            currentQuestionIndex = 0;
+            sessionData = [];
+            
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+        }
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            if (event.code === 'Space' && event.target.tagName !== 'INPUT') {
+                event.preventDefault();
+                toggleRecording();
+            } else if (event.code === 'Enter' && event.target.tagName !== 'INPUT') {
+                event.preventDefault();
+                nextQuestion();
+            } else if (event.code === 'KeyP' && event.target.tagName !== 'INPUT') {
+                event.preventDefault();
+                pauseTimer();
+            }
+        });
+
+        // Initialize on page load
+        window.addEventListener('load', function() {
+            // Check for microphone permissions
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(function(stream) {
+                        console.log('Microphone access granted');
+                        stream.getTracks().forEach(track => track.stop());
+                    })
+                    .catch(function(err) {
+                        console.warn('Microphone access denied:', err);
+                        alert('Microphone access is required for speech recognition. Please allow microphone access and refresh the page.');
+                    });
+            }
+        });
+
+        // Add mobile responsiveness
+        function checkMobile() {
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                // Adjust layout for mobile
+                document.querySelectorAll('.btn').forEach(btn => {
+                    btn.style.fontSize = '14px';
+                    btn.style.padding = '12px 20px';
+                });
+            }
+        }
+
+        window.addEventListener('resize', checkMobile);
+        checkMobile();
+
+        // Add sound effects (optional)
+        function playSound(type) {
+            // Create audio context for sound effects
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            if (type === 'start') {
+                // Play start recording sound
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            } else if (type === 'stop') {
+                // Play stop recording sound
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            }
+        }
+
+        // Enhanced recording functions with sound effects
+        function startRecordingEnhanced() {
+            if (recognition) {
+                recognition.start();
+                isRecording = true;
+                playSound('start');
+                
+                document.getElementById('recordBtn').textContent = '⏹️ Stop Recording';
+                document.getElementById('recordingStatus').innerHTML = '<p>🔴 Recording in progress...</p>';
+                document.getElementById('recordingStatus').className = 'recording-status recording';
+                document.getElementById('transcript').style.display = 'block';
+                
+                // Start timer when recording starts
+                if (!timer) {
+                    startTimer();
+                }
+            } else {
+                alert('Speech recognition not supported in this browser. Please use Chrome or Edge for best experience.');
+            }
+        }
+
+        function stopRecordingEnhanced() {
+            if (recognition && isRecording) {
+                recognition.stop();
+                isRecording = false;
+                playSound('stop');
+                
+                document.getElementById('recordBtn').textContent = '🎤 Start Recording';
+                document.getElementById('recordingStatus').innerHTML = '<p>⏹️ Recording stopped</p>';
+                document.getElementById('recordingStatus').className = 'recording-status stopped';
+                
+                // Save the question and answer
+                const question = document.getElementById('currentQuestion').textContent;
+                const answer = document.getElementById('transcriptText').textContent;
+                
+                sessionData.push({
+                    phase: currentSession.phases[currentPhase].name,
+                    question: question,
+                    answer: answer,
+                    timeUsed: currentSession.timePerQuestion - timeRemaining
+                });
+            }
+        }
+
+        // Update toggle function to use enhanced versions
+        function toggleRecording() {
+            if (isRecording) {
+                stopRecordingEnhanced();
+            } else {
+                startRecordingEnhanced();
+            }
+        }
+
+        // Add tips and help
+        function showHelp() {
+            alert(`
+🎯 Investment Banking Interview Simulator Help
+
+Keyboard Shortcuts:
+• SPACE - Start/Stop Recording
+• ENTER - Next Question  
+• P - Pause/Resume Timer
+
+Tips for Success:
+• Use STAR format for behavioral questions
+• Keep technical answers structured
+• Practice speaking clearly and confidently
+• Review common IB terminology beforehand
+• Time yourself to build confidence
+
+Technical Requirements:
+• Chrome or Edge browser recommended
+• Microphone access required
+• Stable internet connection
+            `);
+        }
+
+        // Add help button functionality
+        function addHelpButton() {
+            const helpBtn = document.createElement('button');
+            helpBtn.className = 'btn';
+            helpBtn.textContent = '❓ Help';
+            helpBtn.onclick = showHelp;
+            helpBtn.style.position = 'fixed';
+            helpBtn.style.top = '20px';
+            helpBtn.style.right = '20px';
+            helpBtn.style.zIndex = '1000';
+            document.body.appendChild(helpBtn);
+        }
+
+        // Initialize help button
+        addHelpButton();
+
+        // Add performance analytics
+        function analyzePerformance() {
+            if (sessionData.length === 0) return null;
+            
+            const totalTime = sessionData.reduce((sum, item) => sum + item.timeUsed, 0);
+            const avgTime = totalTime / sessionData.length;
+            const maxTime = Math.max(...sessionData.map(item => item.timeUsed));
+            const minTime = Math.min(...sessionData.map(item => item.timeUsed));
+            
+            const phaseBreakdown = {};
+            sessionData.forEach(item => {
+                if (!phaseBreakdown[item.phase]) {
+                    phaseBreakdown[item.phase] = { count: 0, totalTime: 0 };
+                }
+                phaseBreakdown[item.phase].count++;
+                phaseBreakdown[item.phase].totalTime += item.timeUsed;
+            });
+            
+            return {
+                totalQuestions: sessionData.length,
+                totalTime,
+                avgTime,
+                maxTime,
+                minTime,
+                phaseBreakdown
+            };
+        }
+
+        // Enhanced summary with analytics
+        function generateEnhancedSummary() {
+            const summaryContent = document.getElementById('summaryContent');
+            const analytics = analyzePerformance();
+            
+            if (!analytics) {
+                summaryContent.innerHTML = '<p>No data to analyze. Please complete at least one question.</p>';
+                return;
+            }
+            
+            let summaryHTML = `
+                <div class="question-review">
+                    <h5>📊 Performance Analytics</h5>
+                    <p><strong>Candidate:</strong> ${currentSession.candidateName}</p>
+                    <p><strong>Interview Type:</strong> ${currentSession.type.toUpperCase()}</p>
+                    <p><strong>Total Questions:</strong> ${analytics.totalQuestions}</p>
+                    <p><strong>Total Time Used:</strong> ${Math.round(analytics.totalTime / 60)} minutes</p>
+                    <p><strong>Average Time per Question:</strong> ${Math.round(analytics.avgTime)} seconds</p>
+                    <p><strong>Fastest Response:</strong> ${analytics.minTime} seconds</p>
+                    <p><strong>Longest Response:</strong> ${analytics.maxTime} seconds</p>
+                </div>
+                
+                <div class="question-review">
+                    <h5>📈 Phase Breakdown</h5>
+            `;
+            
+            Object.entries(analytics.phaseBreakdown).forEach(([phase, data]) => {
+                const avgPhaseTime = Math.round(data.totalTime / data.count);
+                summaryHTML += `<p><strong>${phase}:</strong> ${data.count} questions, avg ${avgPhaseTime}s per question</p>`;
+            });
+            
+            summaryHTML += '</div>';
+            
+            // Add individual question reviews
+            sessionData.forEach((item, index) => {
+                const efficiency = item.timeUsed <= currentSession.timePerQuestion * 0.8 ? '🟢 Efficient' : 
+                                 item.timeUsed <= currentSession.timePerQuestion ? '🟡 Good' : '🔴 Over Time';
+                
+                summaryHTML += `
+                    <div class="question-review">
+                        <h5>Q${index + 1}: ${item.question}</h5>
+                        <p><strong>Phase:</strong> ${item.phase}</p>
+                        <p><strong>Time Used:</strong> ${item.timeUsed}s / ${currentSession.timePerQuestion}s ${efficiency}</p>
+                        <p><strong>Response Length:</strong> ${item.answer ? item.answer.length : 0} characters</p>
+                        <p><strong>Your Answer:</strong> ${item.answer || 'No response recorded'}</p>
+                    </div>
+                `;
+            });
+            
+            summaryContent.innerHTML = summaryHTML;
+        }
+
+        // Update the original generateSummary function
+        function generateSummary() {
+            generateEnhancedSummary();
+        }
+    </script>
+</body>
+</html>
