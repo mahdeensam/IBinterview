@@ -338,11 +338,10 @@
             <div class="timer-display" id="timerDisplay">2:00</div>
 
             <div class="recording-status" id="recordingStatus">
-                <p>🎤 Click "Start Recording" when ready to answer</p>
+                <p>🎤 Listen for the question, then respond when recording starts</p>
             </div>
 
             <div class="controls">
-                <button class="btn" id="recordBtn" onclick="toggleRecording()">🎤 Start Recording</button>
                 <button class="btn" id="nextBtn" onclick="nextQuestion()">➡️ Next Question</button>
                 <button class="btn" id="pauseBtn" onclick="pauseTimer()">⏸️ Pause</button>
                 <button class="btn" onclick="endInterview()">🏁 End Interview</button>
@@ -575,6 +574,9 @@
         let audioChunks = [];
         let recognition = null;
         let sessionData = [];
+        let speechSynthesis = window.speechSynthesis;
+        let currentTranscript = '';
+        let finalTranscript = '';
 
         // Initialize speech recognition
         function initializeSpeechRecognition() {
@@ -590,21 +592,74 @@
                 recognition.lang = 'en-US';
 
                 recognition.onresult = function(event) {
-                    let finalTranscript = '';
-                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                    let interimTranscript = '';
+                    finalTranscript = '';
+                    
+                    for (let i = 0; i < event.results.length; i++) {
                         if (event.results[i].isFinal) {
-                            finalTranscript += event.results[i][0].transcript;
+                            finalTranscript += event.results[i][0].transcript + ' ';
+                        } else {
+                            interimTranscript += event.results[i][0].transcript;
                         }
                     }
-                    if (finalTranscript) {
-                        document.getElementById('transcriptText').textContent = finalTranscript;
-                    }
+                    
+                    // Combine final and interim for display
+                    currentTranscript = finalTranscript + interimTranscript;
+                    document.getElementById('transcriptText').textContent = currentTranscript;
                 };
 
                 recognition.onerror = function(event) {
                     console.error('Speech recognition error:', event.error);
+                    if (event.error === 'no-speech') {
+                        // Continue listening for speech
+                        if (isRecording) {
+                            setTimeout(() => {
+                                if (isRecording) recognition.start();
+                            }, 100);
+                        }
+                    }
+                };
+
+                recognition.onend = function() {
+                    // Restart recognition if still recording and timer hasn't ended
+                    if (isRecording && timeRemaining > 0) {
+                        setTimeout(() => {
+                            if (isRecording) recognition.start();
+                        }, 100);
+                    }
                 };
             }
+        }
+
+        // Text-to-speech function
+        function speakQuestion(text) {
+            // Stop any ongoing speech
+            speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+            utterance.volume = 0.8;
+            
+            // Use a professional voice if available
+            const voices = speechSynthesis.getVoices();
+            const preferredVoice = voices.find(voice => 
+                voice.name.includes('Google') || 
+                voice.name.includes('Microsoft') ||
+                voice.lang.includes('en-US')
+            );
+            if (preferredVoice) {
+                utterance.voice = preferredVoice;
+            }
+            
+            utterance.onend = function() {
+                // Auto-start recording after question is spoken
+                setTimeout(() => {
+                    startRecordingAuto();
+                }, 500);
+            };
+            
+            speechSynthesis.speak(utterance);
         }
 
         // Start interview
@@ -696,9 +751,14 @@
             currentQuestionIndex++;
             
             // Reset recording state
-            stopRecording();
+            stopRecordingAuto();
             document.getElementById('transcript').style.display = 'none';
             document.getElementById('transcriptText').textContent = 'Your response will appear here...';
+            currentTranscript = '';
+            finalTranscript = '';
+            
+            // Speak the question
+            speakQuestion(question);
         }
 
         // Timer functions
@@ -709,8 +769,12 @@
                 
                 if (timeRemaining <= 0) {
                     clearInterval(timer);
-                    stopRecording();
-                    nextQuestion();
+                    stopRecordingAuto();
+                    
+                    // Auto advance to next question after a brief pause
+                    setTimeout(() => {
+                        nextQuestion();
+                    }, 1000);
                 }
             }, 1000);
         }
@@ -747,22 +811,13 @@
             }
         }
 
-        // Recording functions
-        function toggleRecording() {
-            if (isRecording) {
-                stopRecording();
-            } else {
-                startRecording();
-            }
-        }
-
-        function startRecording() {
+        // Auto-recording functions (no manual start/stop)
+        function startRecordingAuto() {
             if (recognition) {
                 recognition.start();
                 isRecording = true;
                 
-                document.getElementById('recordBtn').textContent = '⏹️ Stop Recording';
-                document.getElementById('recordingStatus').innerHTML = '<p>🔴 Recording in progress...</p>';
+                document.getElementById('recordingStatus').innerHTML = '<p>🔴 Recording your response...</p>';
                 document.getElementById('recordingStatus').className = 'recording-status recording';
                 document.getElementById('transcript').style.display = 'block';
                 
@@ -771,22 +826,21 @@
                     startTimer();
                 }
             } else {
-                alert('Speech recognition not supported in this browser');
+                alert('Speech recognition not supported in this browser. Please use Chrome or Edge for best experience.');
             }
         }
 
-        function stopRecording() {
+        function stopRecordingAuto() {
             if (recognition && isRecording) {
                 recognition.stop();
                 isRecording = false;
                 
-                document.getElementById('recordBtn').textContent = '🎤 Start Recording';
-                document.getElementById('recordingStatus').innerHTML = '<p>⏹️ Recording stopped</p>';
+                document.getElementById('recordingStatus').innerHTML = '<p>⏹️ Response recorded</p>';
                 document.getElementById('recordingStatus').className = 'recording-status stopped';
                 
                 // Save the question and answer
                 const question = document.getElementById('currentQuestion').textContent;
-                const answer = document.getElementById('transcriptText').textContent;
+                const answer = currentTranscript || finalTranscript;
                 
                 sessionData.push({
                     phase: currentSession.phases[currentPhase].name,
@@ -803,7 +857,9 @@
                 clearInterval(timer);
             }
             
-            stopRecording();
+            // Stop speech synthesis
+            speechSynthesis.cancel();
+            stopRecordingAuto();
             
             document.getElementById('interviewSection').style.display = 'none';
             document.getElementById('sessionSummary').style.display = 'block';
@@ -866,10 +922,7 @@
 
         // Add keyboard shortcuts
         document.addEventListener('keydown', function(event) {
-            if (event.code === 'Space' && event.target.tagName !== 'INPUT') {
-                event.preventDefault();
-                toggleRecording();
-            } else if (event.code === 'Enter' && event.target.tagName !== 'INPUT') {
+            if (event.code === 'Enter' && event.target.tagName !== 'INPUT') {
                 event.preventDefault();
                 nextQuestion();
             } else if (event.code === 'KeyP' && event.target.tagName !== 'INPUT') {
@@ -891,6 +944,13 @@
                         console.warn('Microphone access denied:', err);
                         alert('Microphone access is required for speech recognition. Please allow microphone access and refresh the page.');
                     });
+            }
+            
+            // Load voices for speech synthesis
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = function() {
+                    console.log('Voices loaded:', speechSynthesis.getVoices().length);
+                };
             }
         });
 
@@ -947,56 +1007,15 @@
 
         // Enhanced recording functions with sound effects
         function startRecordingEnhanced() {
-            if (recognition) {
-                recognition.start();
-                isRecording = true;
-                playSound('start');
-                
-                document.getElementById('recordBtn').textContent = '⏹️ Stop Recording';
-                document.getElementById('recordingStatus').innerHTML = '<p>🔴 Recording in progress...</p>';
-                document.getElementById('recordingStatus').className = 'recording-status recording';
-                document.getElementById('transcript').style.display = 'block';
-                
-                // Start timer when recording starts
-                if (!timer) {
-                    startTimer();
-                }
-            } else {
-                alert('Speech recognition not supported in this browser. Please use Chrome or Edge for best experience.');
-            }
+            startRecordingAuto();
         }
 
         function stopRecordingEnhanced() {
-            if (recognition && isRecording) {
-                recognition.stop();
-                isRecording = false;
-                playSound('stop');
-                
-                document.getElementById('recordBtn').textContent = '🎤 Start Recording';
-                document.getElementById('recordingStatus').innerHTML = '<p>⏹️ Recording stopped</p>';
-                document.getElementById('recordingStatus').className = 'recording-status stopped';
-                
-                // Save the question and answer
-                const question = document.getElementById('currentQuestion').textContent;
-                const answer = document.getElementById('transcriptText').textContent;
-                
-                sessionData.push({
-                    phase: currentSession.phases[currentPhase].name,
-                    question: question,
-                    answer: answer,
-                    timeUsed: currentSession.timePerQuestion - timeRemaining
-                });
-            }
+            stopRecordingAuto();
         }
 
-        // Update toggle function to use enhanced versions
-        function toggleRecording() {
-            if (isRecording) {
-                stopRecordingEnhanced();
-            } else {
-                startRecordingEnhanced();
-            }
-        }
+        // Remove toggle function since we're auto-recording
+        // function toggleRecording() { ... } - REMOVED
 
         // Add tips and help
         function showHelp() {
@@ -1004,21 +1023,27 @@
 🎯 Investment Banking Interview Simulator Help
 
 Keyboard Shortcuts:
-• SPACE - Start/Stop Recording
 • ENTER - Next Question  
 • P - Pause/Resume Timer
+
+How It Works:
+• Questions are automatically spoken aloud
+• Recording starts automatically after question
+• Speak your answer clearly
+• Timer auto-advances to next question
+• Complete transcript is captured
 
 Tips for Success:
 • Use STAR format for behavioral questions
 • Keep technical answers structured
 • Practice speaking clearly and confidently
 • Review common IB terminology beforehand
-• Time yourself to build confidence
+• Listen carefully to each question
 
 Technical Requirements:
 • Chrome or Edge browser recommended
 • Microphone access required
-• Stable internet connection
+• Speakers/headphones for question audio
             `);
         }
 
